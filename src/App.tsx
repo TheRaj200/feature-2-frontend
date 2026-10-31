@@ -8,6 +8,7 @@ import { AuctionDetail } from './components/AuctionDetail';
 import { CreateAuctionModal } from './components/CreateAuctionModal';
 import { Toast } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
+import { formatINR } from './utils/format';
 import { Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import './App.css';
 
@@ -60,7 +61,7 @@ export const App: React.FC = () => {
         ) {
           addToast(
             'success',
-            `New high bid on "${item.title}": ₹${item.currentHighestBid.toLocaleString('en-IN')} by ${item.currentWinner.bidderName}!`
+            `New high bid on "${item.title}": ₹${formatINR(item.currentHighestBid)} by ${item.currentWinner.bidderName}!`
           );
         }
         previousWinnerRef.current[item._id] = item.currentWinner?.bidderName || null;
@@ -131,7 +132,7 @@ export const App: React.FC = () => {
       previousWinnerRef.current[auctionId] = bidderName;
       addToast(
         'success',
-        `Bid accepted! ₹${amount.toLocaleString('en-IN')} is now the highest bid.`
+        `Bid accepted! ₹${formatINR(amount)} is now the highest bid.`
       );
     } catch (err: any) {
       addToast('error', err.message || 'Bid rejected');

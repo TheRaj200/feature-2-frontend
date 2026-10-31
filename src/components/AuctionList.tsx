@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { AuctionItem } from '../types/auction';
 import { ArrowRight, Clock, Plus, Tag, Flame, CheckCircle2 } from 'lucide-react';
+import { formatINR } from '../utils/format';
 
 interface AuctionListProps {
   auctions: AuctionItem[];
@@ -145,14 +146,14 @@ export const AuctionList: React.FC<AuctionListProps> = ({
                     <div className="lot-price-col">
                       <span className="price-tag-label">Starting</span>
                       <span className="price-tag-val font-mono">
-                        ₹{item.startingPrice.toLocaleString('en-IN')}
+                        ₹{formatINR(item?.startingPrice)}
                       </span>
                     </div>
 
                     <div className="lot-price-col text-right">
                       <span className="price-tag-label">Current Highest</span>
                       <span className="price-tag-val font-mono font-bold">
-                        ₹{currentHighest.toLocaleString('en-IN')}
+                        ₹{formatINR(currentHighest)}
                       </span>
                     </div>
                   </div>

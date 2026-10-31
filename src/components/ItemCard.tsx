@@ -1,6 +1,7 @@
 import React from 'react';
 import type { AuctionItem } from '../types/auction';
 import { Tag, TrendingUp, ShieldCheck, UserCheck } from 'lucide-react';
+import { formatINR } from '../utils/format';
 
 interface ItemCardProps {
   auction: AuctionItem;
@@ -42,7 +43,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ auction }) => {
               <Tag size={13} /> Starting Price
             </span>
             <div className="metric-value font-mono">
-              ${auction.startingPrice.toLocaleString()}
+              ₹{formatINR(auction?.startingPrice)}
             </div>
             <span className="metric-subtext">Original Reserve</span>
           </div>
@@ -53,7 +54,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ auction }) => {
               <TrendingUp size={14} /> Current Highest Bid
             </span>
             <div className="metric-value font-mono text-emerald-600 font-bold">
-              ${auction.currentHighestBid.toLocaleString()}
+              ₹{formatINR(auction?.currentHighestBid)}
             </div>
             <span className="metric-subtext">
               {hasBids && auction.currentWinner?.bidderName ? (

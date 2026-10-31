@@ -13,6 +13,7 @@ import {
   AlertCircle,
   RotateCcw,
 } from 'lucide-react';
+import { formatINR } from '../utils/format';
 
 interface AuctionDetailProps {
   auction: AuctionItem;
@@ -89,14 +90,14 @@ export const AuctionDetail: React.FC<AuctionDetailProps> = ({
     if (hasExistingBids) {
       if (numericAmount <= auction.currentHighestBid) {
         setValidationError(
-          `Bid rejected: Your bid (₹${numericAmount.toLocaleString('en-IN')}) must strictly exceed current highest bid (₹${auction.currentHighestBid.toLocaleString('en-IN')}).`
+          `Bid rejected: Your bid (₹${formatINR(numericAmount)}) must strictly exceed current highest bid (₹${formatINR(auction.currentHighestBid)}).`
         );
         return;
       }
     } else {
       if (numericAmount < auction.startingPrice) {
         setValidationError(
-          `Bid rejected: Your bid cannot be lower than the starting price (₹${auction.startingPrice.toLocaleString('en-IN')}).`
+          `Bid rejected: Your bid cannot be lower than the starting price (₹${formatINR(auction.startingPrice)}).`
         );
         return;
       }
@@ -177,7 +178,7 @@ export const AuctionDetail: React.FC<AuctionDetailProps> = ({
                 <div className="price-metric-box">
                   <span className="metric-tag-label">Starting Price</span>
                   <div className="metric-tag-val font-mono">
-                    ₹{auction.startingPrice.toLocaleString('en-IN')}
+                    ₹{formatINR(auction.startingPrice)}
                   </div>
                   <span className="metric-tag-sub">Original Reserve</span>
                 </div>
@@ -187,7 +188,7 @@ export const AuctionDetail: React.FC<AuctionDetailProps> = ({
                     <TrendingUp size={13} /> Current Highest Bid
                   </span>
                   <div className="metric-tag-val font-mono font-bold">
-                    ₹{auction.currentHighestBid.toLocaleString('en-IN')}
+                    ₹{formatINR(auction.currentHighestBid)}
                   </div>
                   <span className="metric-tag-sub">
                     {hasExistingBids && auction.currentWinner?.bidderName
@@ -214,7 +215,7 @@ export const AuctionDetail: React.FC<AuctionDetailProps> = ({
             <div className="bid-form-header">
               <h3 className="bid-form-title">Place Your Bid</h3>
               <span className="min-bid-badge">
-                Min: <strong className="font-mono">₹{minimumAcceptable.toLocaleString('en-IN')}</strong>
+                Min: <strong className="font-mono">₹{formatINR(minimumAcceptable)}</strong>
               </span>
             </div>
 
@@ -289,7 +290,7 @@ export const AuctionDetail: React.FC<AuctionDetailProps> = ({
                         className="quick-btn"
                         disabled={bidding}
                       >
-                        +₹{increment.toLocaleString('en-IN')}
+                        +₹{formatINR(increment)}
                       </button>
                     ))}
                   </div>

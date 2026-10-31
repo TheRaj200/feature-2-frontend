@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Bid } from '../types/auction';
 import { History, Crown, User, Clock } from 'lucide-react';
+import { formatINR } from '../utils/format';
 
 interface BidHistoryProps {
   bids: Bid[];
@@ -68,7 +69,7 @@ export const BidHistory: React.FC<BidHistoryProps> = ({ bids, currentHighestBid 
                   </div>
 
                   <div className="bid-amount-tag font-mono">
-                    ₹{bid.amount.toLocaleString('en-IN')}
+                    ₹{formatINR(bid.amount)}
                   </div>
                 </div>
               );

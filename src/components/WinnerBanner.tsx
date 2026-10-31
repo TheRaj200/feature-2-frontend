@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import type { Winner } from '../types/auction';
 import { Trophy, Frown, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { formatINR } from '../utils/format';
 
 interface WinnerBannerProps {
   winner: Winner | null;
@@ -56,7 +57,7 @@ export const WinnerBanner: React.FC<WinnerBannerProps> = ({ winner, startingPric
             <p className="winner-sub-text">
               Won this lot with the highest verified bid of{' '}
               <strong className="font-mono text-black font-bold">
-                ₹{winner?.bidAmount.toLocaleString('en-IN')}
+                ₹{formatINR(winner?.bidAmount)}
               </strong>
             </p>
           </>
@@ -64,7 +65,7 @@ export const WinnerBanner: React.FC<WinnerBannerProps> = ({ winner, startingPric
           <>
             <h3 className="winner-name-text text-zinc-500">No Bids Placed</h3>
             <p className="winner-sub-text">
-              Lot concluded with zero bids above reserve of ₹{startingPrice.toLocaleString('en-IN')}.
+              Lot concluded with zero bids above reserve of ₹{formatINR(startingPrice)}.
             </p>
           </>
         )}

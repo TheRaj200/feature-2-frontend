@@ -22,7 +22,8 @@ export const api = {
     if (!json.success) {
       throw new Error(json.message || 'Failed to fetch auction item');
     }
-    return json.data;
+    const data = json.data as any;
+    return Array.isArray(data) ? data[0] : data;
   },
 
   async createAuction(params: {

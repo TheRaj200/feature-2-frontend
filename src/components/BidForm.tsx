@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { AuctionItem } from '../types/auction';
 import { ArrowUpRight, DollarSign, User, AlertCircle } from 'lucide-react';
+import { formatINR } from '../utils/format';
 
 interface BidFormProps {
   auction: AuctionItem;
@@ -100,7 +101,7 @@ export const BidForm: React.FC<BidFormProps> = ({ auction, onPlaceBid, loading }
       <div className="bid-form-header">
         <h3 className="bid-form-title">Place Your Bid</h3>
         <span className="min-bid-badge">
-          Min acceptable: <strong className="font-mono">${minimumAcceptable.toLocaleString()}</strong>
+          Min acceptable: <strong className="font-mono">₹{formatINR(minimumAcceptable)}</strong>
         </span>
       </div>
 
