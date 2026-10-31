@@ -1,5 +1,5 @@
 import React from 'react';
-import { Gavel, Plus, User, ArrowLeft } from 'lucide-react';
+import { Plus, User, ArrowLeft } from 'lucide-react';
 
 interface NavbarProps {
   currentView: 'list' | 'detail';
@@ -27,12 +27,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           ) : (
             <div className="brand-wrap">
-              <div className="brand-icon-box">
-                <Gavel size={18} className="text-white" />
-              </div>
+            
               <div>
                 <h1 className="brand-title">EventBid</h1>
-                <p className="brand-subtitle">Live Monochromatic Auctions</p>
               </div>
             </div>
           )}

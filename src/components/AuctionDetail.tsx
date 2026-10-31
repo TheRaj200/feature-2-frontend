@@ -48,15 +48,14 @@ export const AuctionDetail: React.FC<AuctionDetailProps> = ({
     auction.status === 'ENDED' || new Date(auction.endTime).getTime() <= now;
   const hasExistingBids = auction.bids && auction.bids.length > 0;
   const currentThreshold = hasExistingBids ? auction.currentHighestBid : auction.startingPrice;
-  const minimumAcceptable = hasExistingBids ? currentThreshold + 500 : currentThreshold;
+  const minimumAcceptable = hasExistingBids ? currentThreshold + 100 : currentThreshold;
 
   // Set default recommended bid amount if empty
   useEffect(() => {
-    if (!amount || Number(amount) <= currentThreshold) {
-      const suggested = hasExistingBids ? currentThreshold + 1000 : currentThreshold;
-      setAmount(String(suggested));
+    if (!amount || Number(amount) < minimumAcceptable) {
+      setAmount(String(minimumAcceptable));
     }
-  }, [currentThreshold, hasExistingBids]);
+  }, [minimumAcceptable]);
 
   const handleQuickAdd = (increment: number) => {
     if (isAuctionEnded) return;
@@ -88,9 +87,10 @@ export const AuctionDetail: React.FC<AuctionDetailProps> = ({
     }
 
     if (hasExistingBids) {
-      if (numericAmount <= auction.currentHighestBid) {
+      const minRequired = auction.currentHighestBid + 100;
+      if (numericAmount < minRequired) {
         setValidationError(
-          `Bid rejected: Your bid (₹${formatINR(numericAmount)}) must strictly exceed current highest bid (₹${formatINR(auction.currentHighestBid)}).`
+          `Bid rejected: Every new bid must be at least ₹100 higher than the current highest bid of ₹${formatINR(auction.currentHighestBid)} (Minimum required: ₹${formatINR(minRequired)}).`
         );
         return;
       }
@@ -105,7 +105,7 @@ export const AuctionDetail: React.FC<AuctionDetailProps> = ({
 
     try {
       await onPlaceBid(auction._id, trimmedName, numericAmount);
-      setAmount(String(numericAmount + 1000));
+      setAmount(String(numericAmount + 100));
     } catch (err: any) {
       setValidationError(err.message || 'Error occurred while submitting bid.');
     }
@@ -282,7 +282,7 @@ export const AuctionDetail: React.FC<AuctionDetailProps> = ({
                 <div className="quick-bid-section">
                   <span className="quick-bid-label">Quick Add:</span>
                   <div className="quick-btn-group">
-                    {[500, 1000, 2500, 5000].map((increment) => (
+                    {[100, 500, 1000, 2500, 5000].map((increment) => (
                       <button
                         type="button"
                         key={increment}
