@@ -1,6 +1,8 @@
 import type { ApiResponse, AuctionItem } from '../types/auction';
 
-const backendUrl = import.meta.env.VITE_API_URL || '';
+const defaultLiveUrl = 'https://feature-2-backend-jcws.onrender.com';
+const backendUrl =
+  import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : defaultLiveUrl);
 const API_BASE = backendUrl ? `${backendUrl.replace(/\/$/, '')}/api/auction` : '/api/auction';
 
 export const api = {
