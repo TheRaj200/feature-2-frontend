@@ -6,8 +6,18 @@ const backendUrl =
 const API_BASE = backendUrl ? `${backendUrl.replace(/\/$/, '')}/api/auction` : '/api/auction';
 
 export const api = {
-  async getAuction(): Promise<AuctionItem> {
+  async getAllAuctions(): Promise<AuctionItem[]> {
     const res = await fetch(API_BASE);
+    const json: ApiResponse<AuctionItem[] | AuctionItem> = await res.json();
+    if (!json.success) {
+      throw new Error(json.message || 'Failed to fetch auctions');
+    }
+    return Array.isArray(json.data) ? json.data : [json.data];
+  },
+
+  async getAuction(id?: string): Promise<AuctionItem> {
+    const url = id ? `${API_BASE}/${id}` : API_BASE;
+    const res = await fetch(url);
     const json: ApiResponse<AuctionItem> = await res.json();
     if (!json.success) {
       throw new Error(json.message || 'Failed to fetch auction item');
@@ -15,8 +25,30 @@ export const api = {
     return json.data;
   },
 
+  async createAuction(params: {
+    title: string;
+    description?: string;
+    imageUrl?: string;
+    startingPrice: number;
+    durationMinutes: number;
+    creatorName?: string;
+  }): Promise<AuctionItem> {
+    const res = await fetch(API_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    });
+    const json: ApiResponse<AuctionItem> = await res.json();
+    if (!json.success) {
+      throw new Error(json.message || 'Failed to create auction');
+    }
+    return json.data;
+  },
+
   async placeBid(auctionId: string, bidderName: string, amount: number): Promise<AuctionItem> {
-    const res = await fetch(`${API_BASE}/bid`, {
+    const res = await fetch(`${API_BASE}/${auctionId}/bid`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -31,13 +63,15 @@ export const api = {
   },
 
   async resetAuction(params: {
+    auctionId?: string;
     durationMinutes?: number;
     startingPrice?: number;
     title?: string;
     description?: string;
     imageUrl?: string;
   }): Promise<AuctionItem> {
-    const res = await fetch(`${API_BASE}/reset`, {
+    const url = params.auctionId ? `${API_BASE}/${params.auctionId}/reset` : `${API_BASE}/reset`;
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

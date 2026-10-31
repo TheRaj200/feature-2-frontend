@@ -2,26 +2,34 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { AuctionItem } from './types/auction';
 import { api } from './services/api';
 import { Navbar } from './components/Navbar';
-import { CountdownTimer } from './components/CountdownTimer';
-import { ItemCard } from './components/ItemCard';
-import { BidForm } from './components/BidForm';
-import { WinnerBanner } from './components/WinnerBanner';
-import { BidHistory } from './components/BidHistory';
-import { OrganizerModal } from './components/OrganizerModal';
+import { WelcomeModal } from './components/WelcomeModal';
+import { AuctionList } from './components/AuctionList';
+import { AuctionDetail } from './components/AuctionDetail';
+import { CreateAuctionModal } from './components/CreateAuctionModal';
 import { Toast } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import './App.css';
 
 export const App: React.FC = () => {
-  const [auction, setAuction] = useState<AuctionItem | null>(null);
+  const [userName, setUserName] = useState<string>(() => {
+    return localStorage.getItem('eventbid_username') || '';
+  });
+  const [isWelcomeOpen, setIsWelcomeOpen] = useState<boolean>(() => {
+    return !localStorage.getItem('eventbid_username');
+  });
+
+  const [auctions, setAuctions] = useState<AuctionItem[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [view, setView] = useState<'list' | 'detail'>('list');
+
   const [loading, setLoading] = useState<boolean>(true);
   const [bidding, setBidding] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [isOrganizerOpen, setIsOrganizerOpen] = useState<boolean>(false);
+  const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const previousWinnerRef = useRef<string | null>(null);
+  const previousWinnerRef = useRef<Record<string, string | null>>({});
 
   const addToast = (type: 'success' | 'error', message: string) => {
     const id = `${Date.now()}-${Math.random()}`;
@@ -35,20 +43,28 @@ export const App: React.FC = () => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const fetchAuction = useCallback(async (isInitial = false) => {
+  const fetchAuctions = useCallback(async (isInitial = false) => {
     try {
       if (isInitial) setLoading(true);
-      const data = await api.getAuction();
-      setAuction(data);
+      const list = await api.getAllAuctions();
+      setAuctions(list);
       setError(null);
 
-      // Notify if new highest bid was placed by someone else
-      if (data.currentWinner?.bidderName && previousWinnerRef.current) {
-        if (data.currentWinner.bidderName !== previousWinnerRef.current) {
-          addToast('success', `New leading bid: $${data.currentHighestBid} by ${data.currentWinner.bidderName}!`);
+      // Notification check if any selected auction got a new bid
+      list.forEach((item) => {
+        const prevWinner = previousWinnerRef.current[item._id];
+        if (
+          item.currentWinner?.bidderName &&
+          prevWinner &&
+          item.currentWinner.bidderName !== prevWinner
+        ) {
+          addToast(
+            'success',
+            `New high bid on "${item.title}": ₹${item.currentHighestBid.toLocaleString('en-IN')} by ${item.currentWinner.bidderName}!`
+          );
         }
-      }
-      previousWinnerRef.current = data.currentWinner?.bidderName || null;
+        previousWinnerRef.current[item._id] = item.currentWinner?.bidderName || null;
+      });
     } catch (err: any) {
       console.error(err);
       if (isInitial) {
@@ -60,22 +76,63 @@ export const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchAuction(true);
-    // Real-time synchronization polling every 2.5 seconds
+    fetchAuctions(true);
     const interval = setInterval(() => {
-      fetchAuction(false);
+      fetchAuctions(false);
     }, 2500);
     return () => clearInterval(interval);
-  }, [fetchAuction]);
+  }, [fetchAuctions]);
 
-  const handlePlaceBid = async (bidderName: string, amount: number) => {
-    if (!auction) return;
+  const handleSaveName = (name: string) => {
+    setUserName(name);
+    localStorage.setItem('eventbid_username', name);
+    setIsWelcomeOpen(false);
+    addToast('success', `Welcome, ${name}! You can now bid and launch auctions.`);
+  };
+
+  const handleSelectAuction = (id: string) => {
+    setSelectedId(id);
+    setView('detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackToList = () => {
+    setView('list');
+    setSelectedId(null);
+  };
+
+  const handleCreateAuction = async (params: {
+    title: string;
+    description: string;
+    startingPrice: number;
+    durationMinutes: number;
+    imageUrl: string;
+  }) => {
+    try {
+      const created = await api.createAuction({
+        ...params,
+        creatorName: userName || 'Organizer',
+      });
+      setAuctions((prev) => [created, ...prev]);
+      setSelectedId(created._id);
+      setView('detail');
+      addToast('success', `Auction lot "${created.title}" launched successfully!`);
+    } catch (err: any) {
+      addToast('error', err.message || 'Failed to create auction');
+      throw err;
+    }
+  };
+
+  const handlePlaceBid = async (auctionId: string, bidderName: string, amount: number) => {
     setBidding(true);
     try {
-      const updated = await api.placeBid(auction._id, bidderName, amount);
-      setAuction(updated);
-      previousWinnerRef.current = bidderName;
-      addToast('success', `Success! Your bid of $${amount.toLocaleString()} is now the highest bid.`);
+      const updated = await api.placeBid(auctionId, bidderName, amount);
+      setAuctions((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      previousWinnerRef.current[auctionId] = bidderName;
+      addToast(
+        'success',
+        `Bid accepted! ₹${amount.toLocaleString('en-IN')} is now the highest bid.`
+      );
     } catch (err: any) {
       addToast('error', err.message || 'Bid rejected');
       throw err;
@@ -84,47 +141,45 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleAuctionExpire = () => {
-    fetchAuction(false);
-  };
-
   const handleResetAuction = async (params: {
+    auctionId: string;
     durationMinutes: number;
     startingPrice: number;
-    title?: string;
   }) => {
     try {
       const resetData = await api.resetAuction(params);
-      setAuction(resetData);
-      previousWinnerRef.current = null;
-      addToast('success', 'Auction has been restarted with a fresh timer.');
+      setAuctions((prev) => prev.map((item) => (item._id === resetData._id ? resetData : item)));
+      previousWinnerRef.current[params.auctionId] = null;
+      addToast('success', 'Auction timer reset to 5 minutes!');
     } catch (err: any) {
-      addToast('error', err.message || 'Failed to restart auction');
+      addToast('error', err.message || 'Failed to reset auction');
       throw err;
     }
   };
 
-  if (loading) {
+  const selectedAuction = auctions.find((a) => a._id === selectedId) || auctions[0];
+
+  if (loading && auctions.length === 0) {
     return (
       <div className="center-screen">
-        <div className="loading-card">
-          <Loader2 size={36} className="spin text-indigo-600" />
-          <p className="loading-text">Connecting to Live Auction Server...</p>
+        <div className="loading-card-bw">
+          <Loader2 size={32} className="spin text-black mb-3" />
+          <p className="loading-text-bw">Connecting to EventBid Live Network...</p>
         </div>
       </div>
     );
   }
 
-  if (error || !auction) {
+  if (error && auctions.length === 0) {
     return (
       <div className="center-screen">
-        <div className="error-card">
-          <AlertCircle size={40} className="text-red-500 mb-3" />
-          <h2 className="text-lg font-bold text-slate-800">Connection Failed</h2>
-          <p className="text-sm text-slate-500 mt-1 mb-4">
-            {error || 'Unable to load auction item. Please ensure backend server is running.'}
+        <div className="error-card-bw">
+          <AlertCircle size={36} className="text-black mb-3" />
+          <h2 className="text-lg font-bold text-black">Network Connection Issue</h2>
+          <p className="text-sm text-zinc-600 mt-1 mb-4">
+            {error || 'Unable to connect to backend server.'}
           </p>
-          <button onClick={() => fetchAuction(true)} className="confirm-btn">
+          <button onClick={() => fetchAuctions(true)} className="btn-black-primary">
             <RefreshCw size={14} /> Retry Connection
           </button>
         </div>
@@ -132,63 +187,48 @@ export const App: React.FC = () => {
     );
   }
 
-  const isEnded = auction.status === 'ENDED' || new Date(auction.endTime) <= new Date();
-
   return (
-    <div className="app-layout">
+    <div className="app-layout-bw">
       <Navbar
-        status={isEnded ? 'ENDED' : 'ACTIVE'}
-        onOpenSettings={() => setIsOrganizerOpen(true)}
+        currentView={view}
+        userName={userName}
+        onBackToList={handleBackToList}
+        onOpenCreate={() => setIsCreateOpen(true)}
+        onChangeName={() => setIsWelcomeOpen(true)}
       />
 
-      <main className="main-content">
-        <div className="content-container">
-          {/* Top Banner / Winner announcement if ended */}
-          {isEnded && (
-            <div className="winner-section mb-6">
-              <WinnerBanner
-                winner={auction.currentWinner}
-                startingPrice={auction.startingPrice}
-              />
-            </div>
+      <main className="main-content-bw">
+        <div className="content-container-bw">
+          {view === 'list' || !selectedAuction ? (
+            <AuctionList
+              auctions={auctions}
+              onSelectAuction={handleSelectAuction}
+              onOpenCreate={() => setIsCreateOpen(true)}
+            />
+          ) : (
+            <AuctionDetail
+              auction={selectedAuction}
+              userName={userName}
+              onBack={handleBackToList}
+              onPlaceBid={handlePlaceBid}
+              onResetAuction={handleResetAuction}
+              bidding={bidding}
+              onExpire={() => fetchAuctions(false)}
+            />
           )}
-
-          <div className="auction-grid">
-            {/* Left Column: Item Display */}
-            <div className="left-column">
-              <ItemCard auction={auction} />
-            </div>
-
-            {/* Right Column: Timer, Bidding Form, and Live History */}
-            <div className="right-column">
-              <CountdownTimer
-                startTime={auction.startTime}
-                endTime={auction.endTime}
-                status={isEnded ? 'ENDED' : 'ACTIVE'}
-                onExpire={handleAuctionExpire}
-              />
-
-              <BidForm
-                auction={auction}
-                onPlaceBid={handlePlaceBid}
-                loading={bidding}
-              />
-
-              <BidHistory
-                bids={auction.bids}
-                currentHighestBid={auction.currentHighestBid}
-              />
-            </div>
-          </div>
         </div>
       </main>
 
-      <OrganizerModal
-        isOpen={isOrganizerOpen}
-        onClose={() => setIsOrganizerOpen(false)}
-        onReset={handleResetAuction}
-        currentTitle={auction.title}
-        currentStartingPrice={auction.startingPrice}
+      <WelcomeModal
+        isOpen={isWelcomeOpen}
+        onSaveName={handleSaveName}
+        initialName={userName}
+      />
+
+      <CreateAuctionModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onCreate={handleCreateAuction}
       />
 
       <Toast toasts={toasts} onDismiss={removeToast} />

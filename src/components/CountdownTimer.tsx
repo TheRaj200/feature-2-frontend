@@ -58,50 +58,52 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
   const isEndingSoon = status === 'ACTIVE' && timeLeft.totalMs > 0 && timeLeft.totalMs < 60000;
 
   return (
-    <div className={`countdown-card ${isEndingSoon ? 'warning-bg' : ''}`}>
+    <div className={`countdown-card-bw ${isEndingSoon ? 'urgent' : ''}`}>
       <div className="countdown-header">
         <div className="countdown-title-wrap">
-          <Clock size={18} className={isEndingSoon ? 'text-amber-500' : 'text-indigo-600'} />
+          <Clock size={16} />
           <span className="countdown-title">
             {status === 'ENDED' || timeLeft.totalMs <= 0
               ? 'Auction Finalized'
               : isEndingSoon
-              ? 'Ending Very Soon!'
+              ? 'Ending in Under 1 Min!'
               : 'Time Remaining'}
           </span>
         </div>
-        <div className="countdown-badge">
+        <div className="countdown-badge-bw">
           {status === 'ACTIVE' && timeLeft.totalMs > 0 ? (
-            <span className="live-tag">Accepting Bids</span>
+            <span className="live-pill-bw">
+              <span className="pulse-dot-bw" /> Accepting Bids
+            </span>
           ) : (
-            <span className="closed-tag">Bidding Closed</span>
+            <span className="closed-pill-bw">Bidding Closed</span>
           )}
         </div>
       </div>
 
       <div className="countdown-digits-grid">
-        <div className="digit-box">
+        <div className="digit-box-bw">
           <span className="digit-value">{String(timeLeft.hours).padStart(2, '0')}</span>
           <span className="digit-label">HOURS</span>
         </div>
         <span className="digit-colon">:</span>
-        <div className="digit-box">
+        <div className="digit-box-bw">
           <span className="digit-value">{String(timeLeft.minutes).padStart(2, '0')}</span>
           <span className="digit-label">MINS</span>
         </div>
         <span className="digit-colon">:</span>
-        <div className="digit-box">
-          <span className={`digit-value ${isEndingSoon ? 'digit-urgent' : ''}`}>
+        <div className="digit-box-bw">
+          <span className={`digit-value ${isEndingSoon ? 'urgent-digit' : ''}`}>
             {String(timeLeft.seconds).padStart(2, '0')}
           </span>
           <span className="digit-label">SECS</span>
         </div>
       </div>
 
-      {/* Visual progress bar */}
-      <div className="progress-track">
+      {/* Progress track */}
+      <div className="progress-track-bw">
         <div
-          className={`progress-fill ${isEndingSoon ? 'progress-warning' : ''}`}
+          className="progress-fill-bw"
           style={{ width: `${status === 'ENDED' ? 0 : progressPercent}%` }}
         />
       </div>

@@ -16,13 +16,13 @@ export const WinnerBanner: React.FC<WinnerBannerProps> = ({ winner, startingPric
       confettiTriggered.current = true;
       try {
         confetti({
-          particleCount: 100,
-          spread: 70,
+          particleCount: 80,
+          spread: 60,
           origin: { y: 0.6 },
-          colors: ['#4f46e5', '#10b981', '#f59e0b', '#ec4899'],
+          colors: ['#09090b', '#71717a', '#a1a1aa', '#ffffff'],
         });
       } catch (e) {
-        // Safe fallback if canvas not available
+        // Safe fallback
       }
     }
   }, [winner]);
@@ -30,20 +30,20 @@ export const WinnerBanner: React.FC<WinnerBannerProps> = ({ winner, startingPric
   const hasWinner = Boolean(winner?.bidderName && winner.bidAmount > 0);
 
   return (
-    <div className={`winner-card ${hasWinner ? 'has-winner' : 'no-winner'}`}>
-      <div className="winner-icon-circle">
+    <div className={`winner-card-bw ${hasWinner ? 'has-winner' : 'no-winner'}`}>
+      <div className="winner-icon-box">
         {hasWinner ? (
-          <Trophy size={32} className="trophy-icon" />
+          <Trophy size={26} className="text-black" />
         ) : (
-          <Frown size={32} className="text-slate-400" />
+          <Frown size={26} className="text-zinc-400" />
         )}
       </div>
 
       <div className="winner-details">
-        <div className="winner-headline-badge">
+        <div className="winner-tag">
           {hasWinner ? (
             <span className="flex-center-gap">
-              <Sparkles size={13} /> OFFICIAL WINNER DECLARED
+              <Sparkles size={12} /> OFFICIAL WINNER DECLARED
             </span>
           ) : (
             <span>AUCTION CONCLUDED</span>
@@ -52,19 +52,19 @@ export const WinnerBanner: React.FC<WinnerBannerProps> = ({ winner, startingPric
 
         {hasWinner ? (
           <>
-            <h3 className="winner-name">{winner?.bidderName}</h3>
-            <p className="winner-meta">
-              Secured the item with a winning bid of{' '}
-              <strong className="font-mono text-emerald-600 font-bold">
-                ${winner?.bidAmount.toLocaleString()}
+            <h3 className="winner-name-text">{winner?.bidderName}</h3>
+            <p className="winner-sub-text">
+              Won this lot with the highest verified bid of{' '}
+              <strong className="font-mono text-black font-bold">
+                ₹{winner?.bidAmount.toLocaleString('en-IN')}
               </strong>
             </p>
           </>
         ) : (
           <>
-            <h3 className="winner-name text-slate-600">No Bids Placed</h3>
-            <p className="winner-meta">
-              The auction expired with zero bids above the reserve of ${startingPrice.toLocaleString()}.
+            <h3 className="winner-name-text text-zinc-500">No Bids Placed</h3>
+            <p className="winner-sub-text">
+              Lot concluded with zero bids above reserve of ₹{startingPrice.toLocaleString('en-IN')}.
             </p>
           </>
         )}

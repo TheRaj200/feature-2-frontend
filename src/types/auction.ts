@@ -22,6 +22,7 @@ export interface AuctionItem {
   startTime: string;
   endTime: string;
   status: 'ACTIVE' | 'ENDED';
+  creatorName?: string;
   createdAt?: string;
   updatedAt?: string;
 }
